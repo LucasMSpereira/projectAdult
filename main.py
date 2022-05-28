@@ -10,6 +10,9 @@ import copy
 import sklearn.feature_selection as ftSel
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 
 df = pd.read_csv('./docs/data/adult.csv') # read dataset
 # general idea of dataset
@@ -20,7 +23,7 @@ df.shape # number of columns and lines
 df.dtypes # types of each column
 df.nunique() # amount of distinct values in each column
 np.transpose(df.describe()) # descriptive statistics of numerical columns
-# check which columns have missing values ('?')
+# print mode of each attribute
 for k, v in df.items():
   print(k, end = '\t')
   print(
@@ -71,34 +74,92 @@ amount = 7 # amount of resulting features
 # concatenate encoded categorical features with discretized numerical features
 newFeats = pd.concat([discNumFeats, dfCategsEncode], axis = 1)
 # Study relationship between each feature and the targets
-# featsChi2 = ftSel.SelectKBest(ftSel.chi2, k = amount).fit(newFeats, targets) # scoring by chi-squared
-# featsF = ftSel.SelectKBest(ftSel.f_classif, k = amount).fit(newFeats, targets) # scoring by ANOVA F-value
-# featsMutual = ftSel.SelectKBest(ftSel.mutual_info_classif, k = amount).fit(newFeats, targets) # scoring by mutual information
-# selectFeatsChi2 = ftSel.SelectKBest(ftSel.chi2, k = amount).fit_transform(newFeats, targets) # scoring by chi-squared
 selectFeatsF = ftSel.SelectKBest(ftSel.f_classif, k = amount).fit_transform(newFeats, targets) # scoring by ANOVA F-value
-# selectFeatsMutual = ftSel.SelectKBest(ftSel.mutual_info_classif, k = amount).fit_transform(newFeats, targets) # scoring by mutual information
 ### Split train and test data
-feats_train, feats_test, targets_train, targets_test = train_test_split(selectFeatsF, targets, test_size=0.25, random_state=0)
+feats_train, feats_test, targets_train, targets_test = train_test_split(selectFeatsF, targets, test_size=0.25)
 #%%
-## kNN Classifier with cross-validation
-# knn = sk.neighbors.KNeighborsClassifier(4, weights = 'distance')
-params = {
-  'algorithm': ['ball_tree', 'kd_tree'],
-  'leaf_size': [30],
-  'metric': ['minkowski', 'manhattan'],
-  'metric_params': [None],
-  'n_jobs': [None],
-  'n_neighbors': [4, 5, 6],
-  'p': [2],
-  'weights': ['distance', 'uniform']
-}
-cvKNN = sk.model_selection.GridSearchCV(
-  sk.neighbors.KNeighborsClassifier(), params, cv = 5,
-  scoring = ['accuracy', 'precision', 'recall'], verbose = 5, refit = 'accuracy'
-)
-knn = cvKNN.fit(feats_train, targets_train)
-print(
-  'test accuracy', cvKNN['test_accuracy'], '\n',
-  'test precision', cvKNN['test_precision'], '\n',
-  'test recall', cvKNN['test_recall']
+## Function to build classifier, optimize its HP through CV and test it using holdout set
+# Returns precision, accuracy and recall scores, alongside sk.model_selection.GridSearchCV object
+def myModel(estimator, params, feats_train, targets_train, feats_test, targets_test, numFolds):
+  # Grid search CV object
+  cvModel = sk.model_selection.GridSearchCV(
+    estimator, params, cv = numFolds,
+    scoring = ['accuracy', 'precision', 'recall'], verbose = 3, refit = 'accuracy'
+  )
+  cvModel.fit(feats_train, targets_train) # Search for best hyperparameters
+  bestCVmodel = cvModel.best_estimator_ # Best estimator obtained according to calssification accuracy
+  # Return holdout tests with the best estimator
+  modelPrec =  sk.metrics.precision_score(targets_test, bestCVmodel.predict(feats_test)) # precision
+  modelAcc = sk.metrics.accuracy_score(targets_test, bestCVmodel.predict(feats_test)) # accuracy
+  modelRec = sk.metrics.recall_score(targets_test, bestCVmodel.predict(feats_test)) # recall
+  return [modelPrec, modelAcc, modelRec, cvModel]
+#%%
+## kNN Classifier
+# results = myModel(
+#   sk.neighbors.KNeighborsClassifier(),
+#   {
+#     'algorithm': ['ball_tree', 'kd_tree'],
+#     'leaf_size': [30],
+#     'metric': ['minkowski', 'manhattan'],
+#     'metric_params': [None],
+#     'n_jobs': [None],
+#     'n_neighbors': [4, 5, 6],
+#     'p': [2],
+#     'weights': ['distance', 'uniform']
+#   },
+#   feats_train, targets_train, feats_test, targets_test, 5
+# )
+#%%
+## Decision tree Classifier
+# results = myModel(
+#   DecisionTreeClassifier(),
+#   {
+#     'criterion': ['gini', 'entropy', 'log_loss'],
+#     'splitter': ['best', 'random'],
+#     'max_depth': [None],
+#     'min_samples_split': [2],
+#     "min_samples_leaf": [1, 5],
+#     "min_weight_fraction_leaf": [0.0],
+#     'max_features': ['sqrt', 'log2'],
+#     "random_state": [None],
+#     "max_leaf_nodes": [None],
+#     "min_impurity_decrease": [0.0],
+#     'class_weight': ['balanced', None],
+#     'ccp_alpha': [0.0],
+#   },
+#   feats_train, targets_train, feats_test, targets_test, 5
+# )
+#%%
+## Boosted tree Classifier
+# results = myModel(
+#   GradientBoostingClassifier(),
+#   {
+#     'loss': ['log_loss'],
+#     'learning_rate': [0.1, 0.7],
+#     'n_estimators': [100],
+#     'criterion': ['friedman_mse', 'squared_error'],
+#     'min_samples_split': [2],
+#     "min_samples_leaf": [1],
+#     "min_weight_fraction_leaf": [0.0],
+#     'max_depth': [None],
+#     "min_impurity_decrease": [0.0],
+#     'init': [None],
+#     "random_state": [None],
+#     'max_features': [1.0],
+#     "max_leaf_nodes": [None],
+#     'verbose': [1]
+#   },
+#   feats_train, targets_train, feats_test, targets_test, 4
+# )
+#%%
+## Support vector machine Classifier
+results = myModel(
+  MLPClassifier(),
+  {
+    'activation': ['logistic', 'relu'],
+    'solver': ['lbfgs', 'adam'],
+    'learning_rate': ['invscaling', 'adaptive'],
+    'verbose': [True],
+  },
+  feats_train, targets_train, feats_test, targets_test, 5
 )
