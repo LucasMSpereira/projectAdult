@@ -15,14 +15,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neural_network import MLPClassifier
 
 df = pd.read_csv('./docs/data/adult.csv') # read dataset
-# general idea of dataset
-df.head(8) # show first 8 lines
-df.__dict__ # fields and info
-df.columns # columns
-df.shape # number of columns and lines
-df.dtypes # types of each column
-df.nunique() # amount of distinct values in each column
-np.transpose(df.describe()) # descriptive statistics of numerical columns
 # print mode of each attribute
 for k, v in df.items():
   print(k, end = '\t')
@@ -95,64 +87,64 @@ def myModel(estimator, params, feats_train, targets_train, feats_test, targets_t
   return [modelPrec, modelAcc, modelRec, cvModel]
 #%%
 ## kNN Classifier
-# results = myModel(
-#   sk.neighbors.KNeighborsClassifier(),
-#   {
-#     'algorithm': ['ball_tree', 'kd_tree'],
-#     'leaf_size': [30],
-#     'metric': ['minkowski', 'manhattan'],
-#     'metric_params': [None],
-#     'n_jobs': [None],
-#     'n_neighbors': [4, 5, 6],
-#     'p': [2],
-#     'weights': ['distance', 'uniform']
-#   },
-#   feats_train, targets_train, feats_test, targets_test, 5
-# )
+results = myModel(
+  sk.neighbors.KNeighborsClassifier(),
+  {
+    'algorithm': ['ball_tree', 'kd_tree'],
+    'leaf_size': [30],
+    'metric': ['minkowski', 'manhattan'],
+    'metric_params': [None],
+    'n_jobs': [None],
+    'n_neighbors': [4, 5, 6],
+    'p': [2],
+    'weights': ['distance', 'uniform']
+  },
+  feats_train, targets_train, feats_test, targets_test, 5
+)
 #%%
 ## Decision tree Classifier
-# results = myModel(
-#   DecisionTreeClassifier(),
-#   {
-#     'criterion': ['gini', 'entropy', 'log_loss'],
-#     'splitter': ['best', 'random'],
-#     'max_depth': [None],
-#     'min_samples_split': [2],
-#     "min_samples_leaf": [1, 5],
-#     "min_weight_fraction_leaf": [0.0],
-#     'max_features': ['sqrt', 'log2'],
-#     "random_state": [None],
-#     "max_leaf_nodes": [None],
-#     "min_impurity_decrease": [0.0],
-#     'class_weight': ['balanced', None],
-#     'ccp_alpha': [0.0],
-#   },
-#   feats_train, targets_train, feats_test, targets_test, 5
-# )
+results = myModel(
+  DecisionTreeClassifier(),
+  {
+    'criterion': ['gini', 'entropy', 'log_loss'],
+    'splitter': ['best', 'random'],
+    'max_depth': [None],
+    'min_samples_split': [2],
+    "min_samples_leaf": [1, 5],
+    "min_weight_fraction_leaf": [0.0],
+    'max_features': ['sqrt', 'log2'],
+    "random_state": [None],
+    "max_leaf_nodes": [None],
+    "min_impurity_decrease": [0.0],
+    'class_weight': ['balanced', None],
+    'ccp_alpha': [0.0],
+  },
+  feats_train, targets_train, feats_test, targets_test, 5
+)
 #%%
 ## Boosted tree Classifier
-# results = myModel(
-#   GradientBoostingClassifier(),
-#   {
-#     'loss': ['log_loss'],
-#     'learning_rate': [0.1, 0.7],
-#     'n_estimators': [100],
-#     'criterion': ['friedman_mse', 'squared_error'],
-#     'min_samples_split': [2],
-#     "min_samples_leaf": [1],
-#     "min_weight_fraction_leaf": [0.0],
-#     'max_depth': [None],
-#     "min_impurity_decrease": [0.0],
-#     'init': [None],
-#     "random_state": [None],
-#     'max_features': [1.0],
-#     "max_leaf_nodes": [None],
-#     'verbose': [1]
-#   },
-#   feats_train, targets_train, feats_test, targets_test, 4
-# )
+results = myModel(
+  GradientBoostingClassifier(),
+  {
+    'loss': ['log_loss'],
+    'learning_rate': [0.1, 0.7],
+    'n_estimators': [100],
+    'criterion': ['friedman_mse', 'squared_error'],
+    'min_samples_split': [2],
+    "min_samples_leaf": [1],
+    "min_weight_fraction_leaf": [0.0],
+    'max_depth': [None],
+    "min_impurity_decrease": [0.0],
+    'init': [None],
+    "random_state": [None],
+    'max_features': [1.0],
+    "max_leaf_nodes": [None],
+    'verbose': [1]
+  },
+  feats_train, targets_train, feats_test, targets_test, 4
+)
 #%%
-## Support vector machine Classifier
+## Multi-layer perceptron Classifier
 results = myModel(
   MLPClassifier(),
   {
