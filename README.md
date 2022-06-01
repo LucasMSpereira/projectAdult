@@ -6,3 +6,5 @@ Project about data preparation, and machine learning model building and testing.
 Classifiers tested: k nearest neighbors, decision tree, gradient boosted tree, support vector machines, and multi-layer perceptron.
 
 This was part of the evaluation in the discipline "Statistical learning" during my master's degree.
+
+See the "main.py" script for the procedures.
